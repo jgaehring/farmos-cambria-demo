@@ -1,0 +1,15 @@
+{
+  "name": "farmos-cambria-demo",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cambria": "git+https://github.com/inkandswitch/cambria.git#33e8f42",
+    "farmos": "git+https://github.com/jgaehring/farmOS.js.git#46347a3"
+  }
+}
