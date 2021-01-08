@@ -3,14 +3,15 @@ const Cambria = require('cambria');
 const fieldsToOmit = require('./fieldsToOmit');
 
 const derefSchema = serverSchema => {
-  const { properties, type } = serverSchema.allOf.find(s => s.type === 'object');
-  Object.keys(properties).forEach(key => {
+  const subSchema = serverSchema.allOf.find(s => s.type === 'object');
+  const properties = {};
+  Object.keys(subSchema.properties).forEach(key => {
     properties[key] = serverSchema.definitions[key];
   });
   const schema = {
     ...serverSchema,
     properties,
-    type,
+    type: 'object',
   };
   delete schema.allOf;
   delete schema.definitions;
