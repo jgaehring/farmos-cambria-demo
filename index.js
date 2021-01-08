@@ -3,13 +3,14 @@ const Cambria = require('cambria');
 const fieldsToOmit = require('./fieldsToOmit');
 
 const derefSchema = serverSchema => {
-  const { properties } = serverSchema.allOf.find(s => s.type === 'object');
+  const { properties, type } = serverSchema.allOf.find(s => s.type === 'object');
   Object.keys(properties).forEach(key => {
     properties[key] = serverSchema.definitions[key];
   });
   const schema = {
     ...serverSchema,
     properties,
+    type,
   };
   delete schema.allOf;
   delete schema.definitions;
@@ -21,7 +22,7 @@ const hoistAll = (host, schema, omissions = []) =>
     .filter(name => !omissions.includes(name))
     .map(name => ({ op: 'hoist', host, name }));
 
-const removeAll = names => names.map(name => ({ op: 'remove', name }));
+const removeAll = names => names.map(name => ({ op: 'remove', name, type: 'object' }));
 
 console.log('fetching...');
 session()
@@ -47,4 +48,10 @@ session()
 
     const localSchema = Cambria.updateSchema(schema, lens);
     console.log(localSchema);
+
+    const reverse = Cambria.reverseLens(lens);
+    const serverSchemaRedux = Cambria.updateSchema(localSchema, reverse);
+    console.log(serverSchemaRedux);
+    const defaultActivity = Cambria.defaultObjectForSchema(localSchema);
+    console.log(defaultActivity);
   });
