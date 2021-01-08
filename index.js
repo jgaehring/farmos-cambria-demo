@@ -16,20 +16,12 @@ const derefSchema = serverSchema => {
   return schema;
 }
 
-const hoistAll = (host, schema) => 
+const hoistAll = (host, schema, omissions = []) => 
   Object.keys(schema.properties[host].properties)
+    .filter(name => !omissions.includes(name))
     .map(name => ({ op: 'hoist', host, name }));
 
 const removeAll = names => names.map(name => ({ op: 'remove', name }));
-
-const sequentialUpdate = (schema, lenses) => {
-  const head = lenses[0];
-  const lens = Array.isArray(head) ? head : head(schema);
-  const tailLenses = lenses.slice(1);
-  const nextSchema = Cambria.updateSchema(schema, lens);
-  if (tailLenses.length === 0) { return nextSchema; }
-  return sequentialUpdate(nextSchema, tailLenses);
-}
 
 console.log('fetching...');
 session()
@@ -37,7 +29,7 @@ session()
   .then(serverSchema => {
     const schema = derefSchema(serverSchema);
 
-    const lens1 = [
+    const lens = [
       {
         op: 'in',
         name: 'attributes',
@@ -48,13 +40,11 @@ session()
         name: 'relationships',
         lens: removeAll(fieldsToOmit.relationships),
       },
+      ...hoistAll('attributes', schema, fieldsToOmit.attributes),
+      ...hoistAll('relationships', schema, fieldsToOmit.relationships),
+      ...removeAll(['attributes', 'relationships']),
     ];
-    const lens2 = (schema2) => [
-      ...hoistAll('attributes', schema2),
-      ...hoistAll('relationships', schema2),
-    ];
-    const lens3 = removeAll(['attributes', 'relationships']);
 
-    const localSchema = sequentialUpdate(schema, [lens1, lens2, lens3]);
+    const localSchema = Cambria.updateSchema(schema, lens);
     console.log(localSchema);
   });
